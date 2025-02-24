@@ -30,14 +30,11 @@
   cores: 2
   max_runtime_seconds: 60
 
-- name: kc2
-  openml_task_id: 3913
-  description: "binary test dataset"
+- name: Higgs
+  openml_task_id: 360114
+  description: "test for Higgs dataset"
 
-- name: iris
-  openml_task_id: 59
-  description: "multiclass test dataset"
+- name: higgs
+  openml_task_id: 52950
+  description: "test for higgs dataset"
 
-- name: cholesterol
-  openml_task_id: 2295
-  description: "regression test dataset with both numerical and categorical features with missing values"
