@@ -3,6 +3,11 @@ HERE=$(dirname "$0")
 VERSION=${1:-"stable"}
 REPO=${2:-"https://github.com/aimclub/FEDOT.git"}
 PKG=${3:-"fedot"}
+
+# Fix SSL issues
+export GIT_SSL_NO_VERIFY=1
+export PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+
 if [[ "$VERSION" == "latest" ]]; then
     VERSION="master"
 fi
@@ -12,11 +17,15 @@ fi
 
 RAWREPO=$(echo ${REPO} | sed "s/github\.com/raw\.githubusercontent\.com/")
 if [[ "$VERSION" == "stable" ]]; then
-    PIP install --no-cache-dir -U ${PKG}
+    PIP install --trusted-host pypi.org --trusted-host files.pythonhosted.org \
+               --cert ${PIP_CERT} \
+               --no-cache-dir -U ${PKG}
     echo GET_VERSION_STABLE
     VERSION=$(PY -c "${GET_VERSION_STABLE}")
 elif [[ "$VERSION" =~ ^[0-9] ]]; then
-    PIP install --no-cache-dir -U ${PKG}==${VERSION}
+    PIP install --trusted-host pypi.org --trusted-host files.pythonhosted.org \
+               --cert ${PIP_CERT} \
+               --no-cache-dir -U ${PKG}==${VERSION}
 else
     TARGET_DIR="${HERE}/lib/${PKG}"
     rm -Rf ${TARGET_DIR}
@@ -24,17 +33,19 @@ else
     if [[ "$VERSION" =~ ^# ]]; then
       COMMIT="${VERSION:1}"
     else
-      # find the latest commit to the VERSION branch
       COMMIT=$(git ls-remote "${REPO}" | grep "refs/heads/${VERSION}" | cut -f 1)
       DEPTH="--depth 1 --branch ${VERSION}"
     fi
 
-    git clone  --recurse-submodules --shallow-submodules ${DEPTH} ${REPO} ${TARGET_DIR}
+    git clone --recurse-submodules --shallow-submodules ${DEPTH} ${REPO} ${TARGET_DIR}
     cd ${TARGET_DIR}
     git checkout "${COMMIT}"
+    git config --global http.sslVerify false
     git submodule update --init --recursive
     cd ${HERE}
-    PIP install -U -e ${TARGET_DIR}
+    PIP install --trusted-host pypi.org --trusted-host files.pythonhosted.org \
+               --cert ${PIP_CERT} \
+               -U -e ${TARGET_DIR}
 fi
 
 installed="${HERE}/.setup/installed"
